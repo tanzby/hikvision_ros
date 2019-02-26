@@ -20,6 +20,7 @@ image_transport::Publisher image_pub;
 
 void CALLBACK decode_callback(int nPort, char* pBuf, int nSize, FRAME_INFO * pFrameInfo, void* nReserved1, int nReserved2)
 {
+
     int lFrameType = pFrameInfo->nType;
 
     std_msgs::Header header;
@@ -28,6 +29,7 @@ void CALLBACK decode_callback(int nPort, char* pBuf, int nSize, FRAME_INFO * pFr
 
     if (lFrameType == T_YV12)
     {
+        
         cv::Mat picBGR;
         cv::Mat picYV12 = cv::Mat(pFrameInfo->nHeight * 3/2, pFrameInfo->nWidth, CV_8UC1, pBuf);
         cv::cvtColor(picYV12, picBGR, cv::COLOR_YUV2BGR_YV12);
@@ -35,6 +37,7 @@ void CALLBACK decode_callback(int nPort, char* pBuf, int nSize, FRAME_INFO * pFr
         sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "bgr8", picBGR).toImageMsg();
         image_pub.publish(msg);
 
+        ROS_INFO("[%s] Stream CallBack, Convert YV12 to sensor_msgs.",__APP_NAME__);
     }
 }
 
@@ -106,6 +109,7 @@ bool get_stream(const std::string &ip_addr, const std::string &usr_name, const s
     LONG lUserID;
 
     NET_DVR_Init();
+    NET_DVR_SetLogToFile(3, "./hiklog");
     NET_DVR_USER_LOGIN_INFO struLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40  struDeviceInfoV40 = {0};
     struLoginInfo.bUseAsynLogin = false;
@@ -118,21 +122,17 @@ bool get_stream(const std::string &ip_addr, const std::string &usr_name, const s
 
     if (lUserID < 0)
     {
-        printf("getSteam pyd1---Login error, %d\n", NET_DVR_GetLastError());
+        ROS_INFO("[%s] Login fail, error code: %d",__APP_NAME__,NET_DVR_GetLastError());
         return false;
     }
 
     //Set callback function of getting stream.
     LONG lRealPlayHandle;
     NET_DVR_PREVIEWINFO struPlayInfo = {0};
-    #if (defined(_WIN32) || defined(_WIN_WCE))
-         struPlayInfo.hPlayWnd     = NULL;
-    #elif defined(__linux__)
-         struPlayInfo.hPlayWnd     = 0;
-    #endif
+    struPlayInfo.hPlayWnd     = 0;  
     struPlayInfo.lChannel     = channel;  //channel NO
     struPlayInfo.dwLinkMode   = link_mode;
-    struPlayInfo.bBlocked = 1;
+    struPlayInfo.bBlocked     = 1;
     struPlayInfo.dwDisplayBufNum = 1;
 
     lRealPlayHandle = NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, NULL, NULL);
@@ -144,6 +144,7 @@ bool get_stream(const std::string &ip_addr, const std::string &usr_name, const s
         NET_DVR_Cleanup();
         return false;
     }
+    else ROS_INFO("[%s] Set Play Handler successully.",__APP_NAME__);
 
     //Set callback function of getting stream.
     int iRet;
@@ -156,7 +157,9 @@ bool get_stream(const std::string &ip_addr, const std::string &usr_name, const s
         NET_DVR_Cleanup();
         return false;
     }
-
+    else ROS_INFO("[%s] Set Data Callback successully.",__APP_NAME__);
+       
+    ROS_INFO("[%s] Waiting for data.",__APP_NAME__);
     ros::spin();
 
     NET_DVR_StopRealPlay(lRealPlayHandle);
