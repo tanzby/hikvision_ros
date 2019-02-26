@@ -1,0 +1,23 @@
+<launch>
+
+    <arg name="ip_addr" default="192.168.5.100"/>
+    <arg name="user_name" default="admin"/>
+    <arg name="password" default="admin"/>
+    <arg name="port" default="8000"/>
+    <arg name="channel" default="1"/>
+
+    <!--link_mode: 0-tcp, 1-udp, 2-multicast, 3-rtp, 4-rtp/rtsp, 5-rstp/http-->
+    <arg name="link_mode" default="0"/>
+
+    <node pkg="hikvision_ros" type="hik_ros" name="hik_ros" output="screen">
+        <env name="LD_LIBRARY_PATH"
+             value="$(env LD_LIBRARY_PATH):$(find hikvision_ros)/lib:$(find hikvision_ros)/lib/HCNetSDKCom"/>
+        <param name="ip_addr" value="$(arg ip_addr)" />
+        <param name="user_name" value="$(arg user_name)" />
+        <param name="password" value="$(arg password)" />
+        <param name="port" value="$(arg port)" />
+        <param name="channel" value="$(arg channel)"/>
+        <param name="link_mode" value="$(arg link_mode)"/>
+    </node>
+
+</launch>
