@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
   image_transport
+  camera_info_manager
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -25,10 +26,12 @@ include_directories(
 
 link_directories(lib)
 
-add_executable(hik_ros src/hik_ros.cpp)
-
-target_link_libraries(hik_ros
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  hcnetsdk PlayCtrl
+add_library(hik_cam src/hik_cam.cpp)
+target_link_libraries(hik_cam
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    hcnetsdk PlayCtrl
 )
+
+add_executable(hik_cam_node node/hik_cam_node.cpp)
+target_link_libraries(hik_cam_node hik_cam)
